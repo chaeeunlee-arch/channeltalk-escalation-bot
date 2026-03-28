@@ -24,11 +24,12 @@ slack = SlackBot(token=config.SLACK_BOT_TOKEN, channel=config.SLACK_CHANNEL_ID)
 
 def verify_channeltalk_signature(body: bytes, signature: str) -> bool:
     """채널톡 Webhook 서명 검증 (HMAC-SHA256)"""
-    if not config.CHANNELTALK_SECRET:
-        logger.warning("CHANNELTALK_SECRET이 설정되지 않아 서명 검증을 건너뜁니다.")
+    token = config.CHANNELTALK_WEBHOOK_TOKEN or config.CHANNELTALK_SECRET
+    if not token:
+        logger.warning("서명 검증 토큰 미설정 → 검증 건너뜀")
         return True
     expected = hmac.new(
-        config.CHANNELTALK_SECRET.encode(),
+        token.encode(),
         body,
         hashlib.sha256
     ).hexdigest()
@@ -54,12 +55,18 @@ def channeltalk_webhook():
     except Exception:
         return jsonify({"error": "Invalid JSON"}), 400
 
-    logger.info(f"수신된 이벤트: {payload.get('type', 'unknown')}")
+    event_type = payload.get("type", "unknown")
+    logger.info(f"수신된 이벤트 전체: {json.dumps(payload, ensure_ascii=False)[:500]}")
 
-    # 메시지 이벤트만 처리
-    event_type = payload.get("type", "")
-    if event_type not in ("message_created", "message_added"):
-        return jsonify({"status": "ignored", "reason": "not a message event"}), 200
+    # 메시지 이벤트만 처리 (채널톡 실제 타입에 맞게 확장)
+    MESSAGE_TYPES = (
+        "message_created", "message_added",
+        "userChat", "userChatMessage",
+        "message", "chat_message",
+    )
+    if event_type not in MESSAGE_TYPES:
+        logger.info(f"무시된 이벤트 타입: {event_type}")
+        return jsonify({"status": "ignored", "reason": f"event type={event_type}"}), 200
 
     # 고객 메시지만 처리 (상담원 메시지 제외)
     entity = payload.get("entity", {})

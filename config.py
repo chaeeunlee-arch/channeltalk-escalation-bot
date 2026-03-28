@@ -9,8 +9,9 @@ load_dotenv()
 
 class Config:
     # 채널톡
-    CHANNELTALK_ACCESS_KEY: str = os.getenv("CHANNELTALK_ACCESS_KEY", "69c78ac84aec23cf0dfd")
-    CHANNELTALK_SECRET: str     = os.getenv("CHANNELTALK_SECRET", "99a1257ec39a1a867e2c015af9a69435")
+    CHANNELTALK_ACCESS_KEY: str   = os.getenv("CHANNELTALK_ACCESS_KEY", "69c78ac84aec23cf0dfd")
+    CHANNELTALK_SECRET: str       = os.getenv("CHANNELTALK_SECRET", "")
+    CHANNELTALK_WEBHOOK_TOKEN: str = os.getenv("CHANNELTALK_WEBHOOK_TOKEN", "")
 
     # 슬랙봇
     SLACK_BOT_TOKEN: str   = os.getenv("SLACK_BOT_TOKEN", "")      # xoxb-...
